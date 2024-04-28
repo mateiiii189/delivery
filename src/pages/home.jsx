@@ -1,18 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
-import { APIProvider, Map } from "@vis.gl/react-google-maps";
+import GoogleMapReact from 'google-map-react';
 import "../styles/home.scss";
 
-// Define a custom hook to handle geolocation
-const useGeolocation = () => {
-  const [currentPosition, setCurrentPosition] = useState({ lat: 0, lng: 0 });
+const Marker = ({ lat, lng }) => (
+  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'red', position: 'absolute', transform: 'translate(-50%, -50%)' }}></div>
+);
+
+const HomePage = () => {
+  const [mapCenter, setMapCenter] = useState({ lat: 0, lng: 0 });
+  const [markerPosition, setMarkerPosition] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          setCurrentPosition({ lat: latitude, lng: longitude });
+          const currentPosition = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setMapCenter(currentPosition);
+          setMarkerPosition(currentPosition);
         },
         (error) => {
           console.error("Error getting user location:", error);
@@ -23,25 +31,15 @@ const useGeolocation = () => {
     }
   }, []);
 
-  return currentPosition;
-};
+  const handleMarkerMove = ({ lat, lng }) => {
+    setMarkerPosition({ lat, lng });
+  };
 
-const HomePage = () => {
-  const [mapCenter, setMapCenter] = useState({ lat: 0, lng: 0 });
-  const mapRef = useRef(null);
-
-  // Get user's current location using the custom hook
-  const currentPosition = useGeolocation();
-
-  useEffect(() => {
-    // Set map center to user's current position when available
-    setMapCenter(currentPosition);
-  }, [currentPosition]);
-
-  const handleMapMove = () => {
-    if (mapRef.current) {
-      const newMapCenter = mapRef.current.getMap().getCenter().toJSON();
-      setMapCenter(newMapCenter);
+  const handleButtonClick = () => {
+    if (markerPosition) {
+      console.log("Marker position:", markerPosition);
+    } else {
+      console.log("Nothing");
     }
   };
 
@@ -49,20 +47,15 @@ const HomePage = () => {
     <div className="home-container">
       <Navbar />
       <div className="content">
-        <div className="map-container">
-          <APIProvider
-            apiKey="AIzaSyBi3c7LyShVNqEXUGmA-zcuToSLi8o12GU"
-            onLoad={() => handleMapMove()}
-          >
-            <Map
-              defaultZoom={15}
-              defaultCenter={mapCenter}
-              onViewportChange={() => handleMapMove()}
-              className="map"
-              ref={mapRef}
-            />
-          </APIProvider>
-        </div>
+        <GoogleMapReact
+          bootstrapURLKeys={{ key: 'AIzaSyBi3c7LyShVNqEXUGmA-zcuToSLi8o12GU' }}
+          center={mapCenter}
+          defaultZoom={15}
+          onChildMouseMove={handleMarkerMove}
+        >
+          <Marker lat={markerPosition ? markerPosition.lat : mapCenter.lat} lng={markerPosition ? markerPosition.lng : mapCenter.lng} />
+        </GoogleMapReact>
+        <button onClick={handleButtonClick}>Log Marker Location</button>
       </div>
     </div>
   );
