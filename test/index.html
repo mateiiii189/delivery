@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+</head>
+<body>
+    <div class="test">
+        <input id="addressInput" placeholder="Enter address here" />
+        <button onclick="moveToCurrentLocation()">Get Current Location</button>
+    </div>
+    <div id="locationInfo"></div>
+    <div id="map" style="height: 400px; width: 100%;"></div>
+
+    <script>
+        let map;
+        let marker;
+        let selectButton;
+        let isDragging = false;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 0, lng: 0 }, // Default center
+                zoom: 18, // Set the initial zoom level to be very zoomed in
+                minZoom: 2, // Set the minimum zoom level
+                restriction: {
+                    latLngBounds: { north: 85, south: -85, west: -180, east: 180 },
+                },
+            });
+
+            // Create marker at user's current location
+            marker = new google.maps.Marker({
+                position: { lat: 0, lng: 0 }, // Default position
+                map,
+                draggable: true,
+            });
+
+            // Initialize infowindow with the select button
+            selectButton = document.createElement('button');
+            selectButton.innerHTML = 'Select';
+            selectButton.className = 'marker-select-button';
+
+            const infowindow = new google.maps.InfoWindow({
+                content: selectButton,
+            });
+
+            // Add event listener to update infowindow position when marker is dragged
+            google.maps.event.addListener(marker, 'drag', function() {
+                infowindow.setPosition(marker.getPosition());
+            });
+
+            // Add event listener to update marker position when map is clicked
+            map.addListener('mousedown', () => {
+                isDragging = true;
+            });
+
+            map.addListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            map.addListener('mousemove', (event) => {
+                if (isDragging) {
+                    marker.setPosition(event.latLng);
+                    infowindow.setPosition(event.latLng);
+                }
+            });
+        }
+
+        // Function to move map center and marker to user's current location
+        function moveToCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                console.error("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // Function to show current position
+        function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Set map center and marker position to current location
+            map.setCenter({ lat: latitude, lng: longitude });
+            marker.setPosition({ lat: latitude, lng: longitude });
+
+            // Reverse geocode to get address and update input field
+            const apiKey = 'AIzaSyBi3c7LyShVNqEXUGmA-zcuToSLi8o12GU'; // Replace with your Google Maps API Key
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'OK') {
+                        const addressComponents = data.results[0].address_components;
+                        let address = '';
+                        let streetNumber = '';
+                        let streetName = '';
+                        for (let i = 0; i < addressComponents.length; i++) {
+                            const component = addressComponents[i];
+                            if (component.types.includes('route')) {
+                                streetName = component.long_name;
+                            } else if (component.types.includes('street_number')) {
+                                streetNumber = component.long_name;
+                            }
+                        }
+                        address = `${streetNumber} ${streetName}`;
+                        document.getElementById("addressInput").value = address.trim();
+                    } else {
+                        console.error('Geocoder failed due to:', data.status);
+                    }
+                })
+                .catch(error => console.error("Error fetching location:", error));
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBi3c7LyShVNqEXUGmA-zcuToSLi8o12GU&callback=initMap" async defer></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+.home-container {
+    background-image: url('https://i.imgur.com/rLEFfrU.png');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+}
+
+.content{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 40%;
+    margin-left: 20%;
+}  
+
+.order-now {
+    align-items: center;
+    text-align: center;
+    outline: none;
+    border: none;
+    width: 320px;
+    height: 90px;
+    border-radius: 40px;
+    font-size: 35px;
+    background-color: rgb(56, 250, 73);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.map-container{
+    width: 50%;
+    height: 100%;
+    .map {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 15%;
+        height: 100%;
+        width: 80%;
+        // border: solid rgb(97, 97, 97) 4px;
+        justify-self: center;
+        border-radius: 40px;
+        outline: none;
+    }
+}
+
+*{
+    margin: 0;
+}
